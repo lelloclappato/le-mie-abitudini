@@ -4,7 +4,7 @@
 // È un dato PUBBLICO: identifica l'app, non dà accesso a niente da solo. Il "client secret" invece
 // NON va mai messo qui né in nessun file del sito: con il flusso "token" nel browser non serve.
 // Finché è vuoto, la parte Google non compare e l'app funziona normalmente.
-export const GOOGLE_CLIENT_ID = '';
+export const GOOGLE_CLIENT_ID = '494586901323-p0t3hln8h1rjg8jqhh4a9frl0ncap7h3.apps.googleusercontent.com'; // progetto Google Cloud "Le mie app", lo stesso della sincronizzazione
 
 // Permessi (scope), chiesti solo quando servono:
 export const SCOPE_LETTURA = 'https://www.googleapis.com/auth/calendar.events.readonly'; // solo leggere gli eventi

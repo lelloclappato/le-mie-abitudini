@@ -1,5 +1,9 @@
 # Collegare Google Calendar: guida passo per passo
 
+> **Stato (22 novembre 2026):** l'ID client c'è già: è quello del progetto Google Cloud **"Le mie app"**, creato per la
+> sincronizzazione tra telefono e computer e scritto in `js/google/config.js`. Di questa guida serve solo il **punto 2**
+> (attivare la Google Calendar API nel progetto "Le mie app"). Il resto resta come riferimento.
+
 Questa parte la fai tu, una volta sola, nella **Google Cloud Console**. Serve a ottenere un **ID client**:
 il "documento d'identità" dell'app presso Google. Ci vogliono circa 10 minuti.
 
