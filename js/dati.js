@@ -99,8 +99,13 @@ function migrateOldKeys() {
 export let data = load();
 export function setData(d) { data = d; save(); }
 
+// Dopo ogni salvataggio riuscito: lo usa la sincronizzazione per accorgersi di cosa è cambiato (vedi sincronizzazione.js).
+let dopoSalvataggio = () => {};
+export function quandoSalva(fn) { dopoSalvataggio = fn; }
+
 export function save() {
-  try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) { alert('Impossibile salvare i dati: memoria del browser piena o bloccata.'); }
+  try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) { alert('Impossibile salvare i dati: memoria del browser piena o bloccata.'); return; }
+  try { dopoSalvataggio(); } catch (e) { /* la sincronizzazione non deve mai impedire di salvare */ }
 }
 
 // ---------- valori segnati ----------

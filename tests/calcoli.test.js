@@ -1,6 +1,7 @@
 // Test dei calcoli (serie, percentuali, statistiche, migrazione).
 // "Oggi" è sempre giovedì 24 settembre 2026, così i risultati non cambiano col passare dei giorni.
 import { test, uguale, esegui } from './mini-test.js';
+import './sincro.test.js';
 import { keyOf, addDays } from '../js/utili.js';
 import {
   serieDaStati, serieAbitudine, serieComplessiva, percentuale, percentualeComplessiva,

@@ -17,6 +17,7 @@ import { openNome, saveNome, closeNome, nuoviEventi, mostraEventi, openSpecie, s
 import { openCal, closeCal, apriGoogle, scaricaIcs } from './calendario.js';
 import { openDiario, closeDiario } from './diario.js';
 import * as GV from './google/vista.js';
+import { sincro, quandoArrivanoDati } from './sincronizzazione.js';
 
 // Da chiamare dopo ogni cambiamento ai dati: ridisegna e, se è successo qualcosa di bello
 // (obiettivo raggiunto, nuova medaglia, nuovo stadio della pianta), festeggia.
@@ -124,6 +125,12 @@ document.addEventListener('click', e => {
     case 'calGoogle': apriGoogle(); break;
     case 'calIcs': scaricaIcs(); annuncia('File del calendario scaricato'); break;
     // --- Google Calendar ---
+    case 'sCollega': case 'sOra':
+      sincro.collega().then(s => { if (s.fase === 'pronto') annuncia('Sincronizzato'); else if (s.errore) alert(s.errore); ridisegnaSePuoi(); });
+      break;
+    case 'sScollega':
+      if (confirm('Scollegare questo dispositivo da Google? I dati restano qui e sul tuo Drive, ma smettono di sincronizzarsi qui.')) sincro.scollega().then(render);
+      break;
     case 'gCollega': GV.collega(); break;
     case 'gScollega': GV.scollega(); break;
     case 'gFascia': el.disabled = true; GV.creaFascia(el.dataset.ora).then(msg => { annuncia(msg); alert(msg); render(); }); break;
@@ -224,6 +231,16 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && !ui.form && !ui.goal && !ui.nome && !ui.cal && !ui.specie && !ui.diario) render();
 });
 
+// ---------- sincronizzazione con Google Drive (solo se collegata in "Abitudini") ----------
+// Si ridisegna solo se non c'è un pannello aperto e non stai scrivendo (es. nel diario): altrimenti si aspetta.
+const pannelloAperto = () => ui.form || ui.goal || ui.nome || ui.cal || ui.specie || ui.diario;
+const staiScrivendo = () => { const a = document.activeElement; return !!a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName); };
+let daRidisegnare = false;
+function ridisegnaSePuoi() { if (pannelloAperto() || staiScrivendo()) { daRidisegnare = true; return; } daRidisegnare = false; render(); }
+document.addEventListener('focusout', () => setTimeout(() => { if (daRidisegnare) ridisegnaSePuoi(); }, 0));
+quandoArrivanoDati(() => { controllaObiettivo(); ridisegnaSePuoi(); });
+sincro.ascolta(() => ridisegnaSePuoi());
+
 setupImport(dopoCambio);
 GV.setupGoogle(() => { if (!ui.form && !ui.goal && !ui.nome && !ui.cal && !ui.specie && !ui.diario) render(); });
 render();
@@ -231,3 +248,4 @@ mostraEventi(nuoviEventi()); // benvenuto alla prima apertura, o novità arrivat
 programma();
 // service worker (uso senza connessione), aggiornamenti e installazione: vedi pwa.js
 setupPWA(() => { if (ui.tab === 'hab' && !ui.form) render(); });
+sincro.avvia();

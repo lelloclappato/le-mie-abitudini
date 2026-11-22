@@ -15,6 +15,8 @@ import { icon } from './icone.js';
 import { hasPrimaImport } from './backup.js';
 import { isInstallata, isIOS, puoInstallare } from './pwa.js';
 import { permesso, aggiornaBadge } from './promemoria.js';
+import { sincro } from './sincronizzazione.js';
+import { quandoTesto } from './sincro/sincro.js';
 
 const TABS = [['oggi', 'check', 'Oggi'], ['stat', 'chart', 'Statistiche'], ['gioco', 'trophy', 'Traguardi'], ['hab', 'settings', 'Abitudini']];
 
@@ -52,6 +54,28 @@ export function annuncia(msg) {
   setTimeout(() => { el.textContent = msg; }, 50); // svuotare e riscrivere fa ripetere anche lo stesso messaggio
 }
 
+// ---------- telefono e computer (sincronizzazione con Google Drive) ----------
+function cardSincro() {
+  if (!sincro.disponibile) return '';
+  const s = sincro.stato();
+  let body;
+  if (s.fase === 'spento') {
+    body = `<p class="muted" style="margin:6px 0 0">Accedi con Google per avere le stesse abitudini sul telefono e sul computer. I dati vanno in una
+      cartella nascosta del tuo Google Drive, riservata a queste app: non vedono gli altri tuoi file.</p>
+      <button class="btn block" data-act="sCollega">${icon('cloud', 20)}Accedi con Google</button>`;
+  } else {
+    const riga = s.fase === 'in-corso' ? 'Sincronizzo…'
+      : s.fase === 'errore' ? esc(s.errore)
+      : s.fase === 'da-riconnettere' ? `L’accesso a Google è scaduto (dura un’ora)${sincro.daInviare() ? ': ci sono modifiche da inviare' : ''}.`
+      : s.ultima ? `Sincronizzato ${quandoTesto(s.ultima)}.` : '';
+    body = `${s.email ? `<p class="muted" style="margin:6px 0 0">Collegato come <strong>${esc(s.email)}</strong>. Usa lo stesso account sugli altri dispositivi.</p>` : ''}
+      ${riga ? `<p style="margin:8px 0 0;font-weight:600" role="status">${riga}</p>` : ''}
+      <button class="btn sec block" data-act="sOra" ${s.fase === 'in-corso' ? 'disabled' : ''}>${icon('refresh', 20)}Sincronizza adesso</button>
+      <button class="linkbtn" data-act="sScollega">Scollega questo dispositivo</button>`;
+  }
+  return `<h2>Telefono e computer</h2><div class="card">${body}</div>`;
+}
+
 // ---------- avvisi ----------
 function banner(text, act, btn) {
   return `<div class="banner" role="status"><span>${text}</span><button class="linkbtn" data-act="${act}">${btn}</button></div>`;
@@ -82,6 +106,7 @@ function viewOggi() {
   const hidden = data.habits.length - list.length;
   const doneN = list.filter(h => isDone(data, h, ui.viewKey)).length;
   let html = `<h1>${label}</h1>
+  ${sincro.stato().fase === 'da-riconnettere' ? banner(sincro.daInviare() ? 'Hai modifiche da sincronizzare.' : 'Sincronizza per vedere le novità dagli altri dispositivi.', 'sOra', 'Sincronizza') : ''}
   <div class="datebar">
     <button class="ibtn" data-act="day" data-n="-1" aria-label="Giorno prima">${icon('chevronLeft')}</button>
     <div class="d">${DAYS_FULL[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</div>
@@ -407,9 +432,9 @@ function viewHabits() {
       <button class="ibtn" data-act="calOpen" data-id="${h.id}" aria-label="Aggiungi ${esc(h.name)} al calendario">${icon('calendar', 20)}</button>
       <button class="btn sec" data-act="edit" data-id="${h.id}" aria-label="Modifica ${esc(h.name)}">Modifica</button></div>`;
   }
-  html += cardSerie() + cardPromemoria() + cardGoogle() + cardInstalla();
+  html += cardSerie() + cardPromemoria() + cardSincro() + cardGoogle() + cardInstalla();
   html += `<h2>Dati</h2><div class="card">
-    <div class="muted">I dati restano solo su questo dispositivo. Fai un backup ogni tanto.</div>
+    <div class="muted">${sincro.disponibile && sincro.stato().fase !== 'spento' ? 'I dati sono anche sul tuo Google Drive, ma un backup in più non fa mai male.' : 'I dati restano solo su questo dispositivo. Fai un backup ogni tanto.'}</div>
     <div class="muted" style="margin-top:4px">Ultimo backup: ${data.lastBackup ? esc(data.lastBackup) : 'mai'}</div>
     <button class="btn block" data-act="export">${icon('download', 20)}Esporta backup (JSON)</button>
     <button class="btn sec block" data-act="import">${icon('upload', 20)}Importa backup</button>
